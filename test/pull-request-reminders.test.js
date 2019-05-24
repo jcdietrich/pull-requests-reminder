@@ -3,12 +3,7 @@ const sandbox = require('sinon').createSandbox();
 const test = require('ava');
 
 const pr = require('../src/pull-request-reminders');
-/*
-  getAllPRs,
-  postMessage,
-  formatSlackMessage,
-  _getPRs,
- */
+
 test.beforeEach(() => {
   sandbox.restore();
   nock.cleanAll();
