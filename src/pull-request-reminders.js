@@ -51,7 +51,7 @@ const getAllPRs = async (defaultOwner, repos) => {
         logger.error(`invalid repo name: ${repoFull}`);
     }
 
-    return  _getPRs(owner, repo);
+    return  module.exports._getPRs(owner, repo);
   }));
   return  _.flatten(allPRs);
 };
@@ -78,7 +78,7 @@ const formatSlackMessage = (slackChannel, prs) => {
 const postMessage = async (slackHook, message) => {
   if (message === undefined) {
     logger.info('No open PRs');
-    return Promise.resolve();
+    return;
   }
   var options = {
     uri: slackHook,
@@ -90,7 +90,7 @@ const postMessage = async (slackHook, message) => {
   try {
     const response = await request(options);
     logger.info({ response }, 'Received Slack API response');
-    return Promise.resolve();
+    return;
   } catch(err) {
     logger.error({ options }, 'Error posting message');
     throw err;
