@@ -53,7 +53,7 @@ const getAllPRs = async (defaultOwner, repos) => {
 
     return  module.exports._getPRs(owner, repo);
   }));
-  return  _.flatten(allPRs);
+  return  _.filter(_.flatten(allPRs), x => x !== undefined);
 };
 
 const formatSlackMessage = (slackChannel, prs) => {
