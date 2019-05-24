@@ -26,7 +26,9 @@
   "devDependencies": {
     "ava": "^1.4.1",
     "eslint": "^5.16.0",
-    "nyc": "^14.1.1"
+    "nock": "^10.0.6",
+    "nyc": "^14.1.1",
+    "sinon": "^7.3.2"
   },
   "dependencies": {
     "@octokit/rest": "^16.26.0",
