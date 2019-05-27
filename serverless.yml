@@ -1,20 +1,24 @@
 service: pull-requests-reminder
 
+custom:
+  defaultRegion: 'us-east-1'
+  defaultStage: dev
+
 provider:
   name: aws
   runtime: nodejs8.10
-  stage: ${opt:stage, dev}
-  region: ${opt:region, us-east-1}
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region, self:custom.defaultRegion}
 
-  functions:
-    remind:
-      handler: src/index.remind
-      events:
-        - schedule: ${opt:schedule}
-          environment:
-            SLACK_CHANNEL: ${opt:slack-channel}
-            SLACK_HOOK: ${opt:slack-hook}
-            DEFAULT_OWNER: ${opt:default-owner}
-            REPOSITORIES: ${opt:repos}
-            GIT_PERSONAL_ACCESS_TOKEN: ${opt:git-pat}
+functions:
+  remind:
+    handler: src/index.remind
+    events:
+      - schedule: ${opt:schedule}
+    environment:
+      SLACK_CHANNEL: ${opt:slack-channel}
+      SLACK_HOOK: ${opt:slack-hook}
+      DEFAULT_OWNER: ${opt:default-owner}
+      REPOSITORIES: ${opt:repos}
+      GIT_PERSONAL_ACCESS_TOKEN: ${opt:git-pat}
 
