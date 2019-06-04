@@ -27,6 +27,7 @@ const _getPRs = async (owner, repo) => {
     user: pr.user.login,
     created_at: pr.created_at,
     repo: pr.base.repo.full_name,
+    labels: pr.labels.map(label => label.name),
   }));
 
   return usefulList;
@@ -58,13 +59,23 @@ const getAllPRs = async (defaultOwner, repos) => {
 
 const formatSlackMessage = (slackChannel, prs) => {
   const text = '*This is a reminder that the following PRs are OPEN:*';
-  const attachments = prs.map(pr => ({
-    color: 'warning',
-    title: pr.title,
-    title_link: pr.url,
-    text: `in *${pr.repo}* by ${pr.user} created ${moment(pr.created_at).fromNow()}`,
-    mrkdwn_in: ['text'],
-  }))
+  const attachments = prs.map(pr => {
+    const attachment = {
+      color: 'warning',
+      title: pr.title,
+      title_link: pr.url,
+      text: `in *${pr.repo}* by ${pr.user} created ${moment(pr.created_at).fromNow()}`,
+      mrkdwn_in: ['text'],
+    }
+
+    if (pr.labels.length > 0) {
+      const labels = ` [${pr.labels.join('][')}]`;
+      attachment.title += labels;
+    }
+
+    return attachment;
+  });
+
   if(attachments.length > 0) {
     return {
       channel: slackChannel,
