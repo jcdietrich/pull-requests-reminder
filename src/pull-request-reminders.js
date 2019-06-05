@@ -32,10 +32,16 @@ const _getPRs = async (owner, repo) => {
   }));
 
   usefulList = _.filter(usefulList, pr => {
-    return conf.ignoreWords.reduce((memo, ignore) => {
-      const returnValue = !pr.title.match(ignore)
-      return returnValue && memo;
-    }, true);
+    return conf.ignoreWords.reduce((memo, ignoreWord) => {
+      const noIgnoreWords = !pr.title.match(ignoreWord);
+      return noIgnoreWords && memo;
+    }, true)
+      && conf.ignoreLabels.reduce((memo, ignoreLabel) => {
+        const noIgnoreLabels = pr.labels.reduce((memo, label) => {
+          return !label.match(ignoreLabel) && memo;
+        }, true);
+        return noIgnoreLabels && memo;
+      }, true)
   })
 
   return usefulList;
