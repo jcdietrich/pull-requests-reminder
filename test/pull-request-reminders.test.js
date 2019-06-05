@@ -1,6 +1,7 @@
 const nock = require('nock')
 const sandbox = require('sinon').createSandbox();
 const test = require('ava');
+const moment = require('moment');
 
 const pr = require('../src/pull-request-reminders');
 
@@ -174,4 +175,42 @@ test.serial('postMessage should throw if Slack call fails', async t => {
 
   await t.throwsAsync(pr.postMessage(slackHook, message));
   t.true(call1.isDone());
-})
+});
+
+test('_getColour should return green for a new PR', t => {
+  const green = '#00FF00';
+  const prDate = new moment();
+  const returnValue = pr._getColour(prDate);
+
+  t.is(returnValue, green);
+});
+
+test('_getColour should return red for a PR x days old', t => {
+  const red = '#FF0000';
+  const x = 14;
+  const prDate = new moment().subtract(x, 'days');
+  const returnValue = pr._getColour(prDate, x);
+
+  t.is(returnValue, red);
+});
+
+test('_getColour should return red for a PR more than x days old', t => {
+  const red = '#FF0000';
+  const x = 14;
+  const prDate = new moment().subtract(86, 'days');
+  const returnValue = pr._getColour(prDate, x);
+
+  t.is(returnValue, red);
+});
+
+
+test('_getColour should return neither red nor green for a PR less than x days', t => {
+  const red = '#FF0000';
+  const green = '#00FF00';
+  const x = 14;
+  const prDate = new moment().subtract(x/2, 'days');
+  const returnValue = pr._getColour(prDate, x);
+
+  t.not(returnValue, red);
+  t.not(returnValue, green);
+});

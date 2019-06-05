@@ -3,6 +3,7 @@ const Git = require('@octokit/rest');
 const logger = require('pino')();
 const moment = require('moment');
 const request = require('request-promise-native');
+const color = require('color-convert');
 
 const conf = require('./conf');
 
@@ -57,11 +58,22 @@ const getAllPRs = async (defaultOwner, repos) => {
   return  _.filter(_.flatten(allPRs), x => x !== undefined);
 };
 
+const _getColour = (createDate, daysToRed = conf.daysToRed) => {
+  const now = new moment();
+  const days = now.diff(moment(createDate), 'days');
+  const diff = Math.round(256 / daysToRed);
+  var r = daysToRed === days ? 255 : Math.min(days * diff, 255);
+  var g = 255 - (r);
+  const b = 0;
+
+  return `#${color.rgb.hex(r, g, b)}`;
+};
+
 const formatSlackMessage = (slackChannel, prs) => {
   const text = '*This is a reminder that the following PRs are OPEN:*';
   const attachments = prs.map(pr => {
     const attachment = {
-      color: 'warning',
+      color: _getColour(pr.created_at),
       title: pr.title,
       title_link: pr.url,
       text: `in *${pr.repo}* by ${pr.user} created ${moment(pr.created_at).fromNow()}`,
@@ -113,4 +125,5 @@ module.exports = {
   postMessage,
   formatSlackMessage,
   _getPRs,
+  _getColour,
 }
