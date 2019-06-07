@@ -120,14 +120,16 @@ test.serial('formatSlackMessage should a formatted slack message', t => {
       url: 'url1',
       repo: 'repo1',
       user: 'user1',
-      created_at: Date.now()
+      created_at: Date.now(),
+      labels: ['WIP'],
     },
     {
       title: 'title2',
       url: 'url2',
       repo: 'repo2',
       user: 'user2',
-      created_at: Date.now()
+      created_at: Date.now(),
+      labels: [],
     },
   ];
 
@@ -135,7 +137,7 @@ test.serial('formatSlackMessage should a formatted slack message', t => {
   t.is(result.channel, slackChannel);
   t.is(result.text, '*This is a reminder that the following PRs are OPEN:*');
   t.is(result.attachments.length, prs.length);
-  t.is(result.attachments[0].title, prs[0].title);
+  t.is(result.attachments[0].title, prs[0].title + ' [WIP]');
   t.is(result.attachments[1].title, prs[1].title);
 });
 
