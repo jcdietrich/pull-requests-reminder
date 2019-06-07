@@ -22,7 +22,7 @@ const _getPRs = async (owner, repo) => {
     owner,
     repo,
   });
-  const usefulList = rawList.data.map(pr => ({
+  var usefulList = rawList.data.map(pr => ({
     url: pr._links.html.href,
     title: pr.title,
     user: pr.user.login,
@@ -30,6 +30,13 @@ const _getPRs = async (owner, repo) => {
     repo: pr.base.repo.full_name,
     labels: pr.labels.map(label => label.name),
   }));
+
+  usefulList = _.filter(usefulList, pr => {
+    return conf.ignoreWords.reduce((memo, ignore) => {
+      const returnValue = !pr.title.match(ignore)
+      return returnValue && memo;
+    }, true);
+  })
 
   return usefulList;
 }
