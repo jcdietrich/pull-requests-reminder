@@ -13,7 +13,7 @@ const git = new Git({
 
 const _getPRs = async (owner, repo) => {
   if (repo === undefined){
-    return [];
+    return { ignoreCount:0, usefulList:[] };
   }
 
   logger.info({owner, repo}, 'fetching PRs')
@@ -31,6 +31,8 @@ const _getPRs = async (owner, repo) => {
     labels: pr.labels.map(label => label.name),
   }));
 
+  const fullCount = usefulList.length;
+
   usefulList = _.filter(usefulList, pr => {
     return conf.ignoreWords.reduce((memo, ignoreWord) => {
       const noIgnoreWords = !pr.title.match(ignoreWord);
@@ -44,31 +46,51 @@ const _getPRs = async (owner, repo) => {
       }, true)
   })
 
-  return usefulList;
+  const ignoreCount = fullCount - usefulList.length;
+
+  return {
+    usefulList,
+    ignoreCount,
+  };
 }
 
 const getAllPRs = async (defaultOwner, repos) => {
-  const allPRs = await Promise.all(_.uniq(repos).map(async repoFull => {
-    let repo;
-    let owner;
-    const parts = repoFull.split('/');
+  let allPRs = await Promise.all(_.uniq(repos)
+    .map(async repoFull => {
+      let repo;
+      let owner;
+      const parts = repoFull.split('/');
 
-    switch (parts.length) {
-      case 1:
-        owner = defaultOwner;
-        repo = parts[0];
-        break;
-      case 2:
-        owner = parts[0];
-        repo = parts[1];
-        break;
-      default:
-        logger.error(`invalid repo name: ${repoFull}`);
-    }
+      switch (parts.length) {
+        case 1:
+          owner = defaultOwner;
+          repo = parts[0];
+          break;
+        case 2:
+          owner = parts[0];
+          repo = parts[1];
+          break;
+        default:
+          logger.error(`invalid repo name: ${repoFull}`);
+      }
 
-    return  module.exports._getPRs(owner, repo);
-  }));
-  return  _.filter(_.flatten(allPRs), x => x !== undefined);
+      const prInfo = await module.exports._getPRs(owner, repo);
+      return prInfo
+    }));
+
+    allPRs = allPRs.reduce((memo, result) => {
+      if (result === undefined) {
+        return memo;
+      }
+      memo.ignoreCount += result.ignoreCount;
+      memo.prs = memo.prs.concat(result.usefulList);
+      return memo;
+    }, {
+      ignoreCount: 0,
+      prs: [],
+    });
+  allPRs.prs = _.flatten(allPRs.prs);
+  return allPRs;
 };
 
 const _getColour = (createDate, daysToRed = conf.daysToRed) => {
@@ -82,8 +104,8 @@ const _getColour = (createDate, daysToRed = conf.daysToRed) => {
   return `#${color.rgb.hex(r, g, b)}`;
 };
 
-const formatSlackMessage = (slackChannel, prs) => {
-  const text = '*This is a reminder that the following PRs are OPEN:*';
+const formatSlackMessage = (slackChannel, { ignoreCount, prs }) => {
+  let text = '*This is a reminder that the following PRs are OPEN:*';
   const attachments = prs.map(pr => {
     const attachment = {
       color: _getColour(pr.created_at),
@@ -101,7 +123,14 @@ const formatSlackMessage = (slackChannel, prs) => {
     return attachment;
   });
 
-  if(attachments.length > 0) {
+  if (ignoreCount > 0) {
+    if (attachments.length === 0) {
+      text = `There are no open PRs,`
+    }
+      text += ` _${ignoreCount} ignored_`;
+  }
+
+  if(attachments.length > 0 || ignoreCount > 0) {
     return {
       channel: slackChannel,
       text,
