@@ -21,7 +21,8 @@ test.serial('getAllPRs should call _getPRs n times', async t => {
   const repos = ['one', 'two'];
   const defaultOwner = 'OwnER';
 
-  const stub = sandbox.stub(pr, '_getPRs');
+  const stub = sandbox.stub(pr, '_getPRs')
+    .resolves({ ignoreCount:0, usefulList: [] });
 
   await pr.getAllPRs(defaultOwner, repos);
   t.is(stub.callCount, repos.length);
@@ -31,7 +32,8 @@ test.serial('getAllPRs should call _getPRs n times, but no repeats', async t => 
   const repos = ['one', 'two', 'one'];
   const defaultOwner = 'OwnER';
 
-  const stub = sandbox.stub(pr, '_getPRs');
+  const stub = sandbox.stub(pr, '_getPRs')
+    .resolves({ ignoreCount:0, usefulList: [] });
 
   await pr.getAllPRs(defaultOwner, repos);
   t.is(stub.callCount, repos.length - 1);
@@ -41,7 +43,8 @@ test.serial('getAllPRs should use the given or default owner', async t => {
   const repos = ['one', 'otherOwner/two'];
   const defaultOwner = 'OwnER';
 
-  const stub = sandbox.stub(pr, '_getPRs');
+  const stub = sandbox.stub(pr, '_getPRs')
+    .resolves({ ignoreCount:0, usefulList: [] });
 
   await pr.getAllPRs(defaultOwner, repos);
   t.true(stub.firstCall.calledWithExactly(defaultOwner, repos[0]));
@@ -52,11 +55,12 @@ test.serial('getAllPRs calls with undefineds if repo name has more than one /', 
   const repos = ['other/Owner/two'];
   const defaultOwner = 'OwnER';
 
-  const stub = sandbox.stub(pr, '_getPRs');
+  const stub = sandbox.stub(pr, '_getPRs')
+    .resolves({ ignoreCount:0, usefulList: [] });
 
   const result = await pr.getAllPRs(defaultOwner, repos);
   t.true(stub.firstCall.calledWithExactly(undefined, undefined));
-  t.deepEqual(result, []);
+  t.deepEqual(result, { ignoreCount: 0, prs: [] });
 });
 
 test.serial('getAllPRs should flatten the arrays', async t => {
@@ -64,10 +68,10 @@ test.serial('getAllPRs should flatten the arrays', async t => {
   const defaultOwner = 'OwnER';
 
   const stub = sandbox.stub(pr, '_getPRs');
-  stub.returns(Promise.resolve([1]));
+  stub.resolves({ usefulList: [1], ignoreCount: 0 });
 
   const result = await pr.getAllPRs(defaultOwner, repos);
-  t.deepEqual(result, [1,1]);
+  t.deepEqual(result, { prs: [1,1], ignoreCount: 0 });
 });
 
 test.serial('_getPRs calls github correctly', async t => {
@@ -96,21 +100,30 @@ test.serial('_getPRs rejects if github call fails', async t => {
   t.true(call1.isDone());
 });
 
-test.serial('_getPRs returns [] if repo is undefined', async t => {
+test.serial('_getPRs returns correctly if repo is undefined', async t => {
 
   const repo = undefined;
   const owner = 'OwnER';
 
   const result = await pr._getPRs(owner, repo);
-  t.deepEqual(result, []);
+  t.deepEqual(result, { ignoreCount: 0, usefulList: [] });
 });
 
-test.serial('formatSlackMessage should return undefined if there is no prs', t => {
+test.serial('formatSlackMessage should return undefined if there is no prs and non ignored', t => {
   const slackChannel = '#dummy';
-  const prs = [];
+  const prs = { ignoreCount: 0, prs: [] };
 
   const result = pr.formatSlackMessage(slackChannel, prs);
   t.is(result, undefined)
+});
+
+test.serial('formatSlackMessage should return no attachements if no prs but at least one ignored', t => {
+  const slackChannel = '#dummy';
+  const prs = { ignoreCount: 1, prs: [] };
+
+  const result = pr.formatSlackMessage(slackChannel, prs);
+  t.is(result.text, 'There are no open PRs, _1 ignored_');
+  t.deepEqual(result.attachments, [])
 });
 
 test.serial('formatSlackMessage should a formatted slack message', t => {
@@ -134,7 +147,7 @@ test.serial('formatSlackMessage should a formatted slack message', t => {
     },
   ];
 
-  const result = pr.formatSlackMessage(slackChannel, prs);
+  const result = pr.formatSlackMessage(slackChannel, { ignoreCount: 0, prs });
   t.is(result.channel, slackChannel);
   t.is(result.text, '*This is a reminder that the following PRs are OPEN:*');
   t.is(result.attachments.length, prs.length);
