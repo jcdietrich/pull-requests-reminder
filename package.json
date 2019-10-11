@@ -32,11 +32,10 @@
   },
   "dependencies": {
     "@octokit/rest": "^16.26.0",
+    "@slack/web-api": "^5.2.1",
     "color-convert": "^2.0.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.15",
     "moment": "^2.24.0",
-    "pino": "^5.12.5",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.7"
+    "pino": "^5.12.5"
   }
 }

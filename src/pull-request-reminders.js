@@ -2,14 +2,18 @@ const _ = require('lodash');
 const Git = require('@octokit/rest');
 const logger = require('pino')();
 const moment = require('moment');
-const request = require('request-promise-native');
 const color = require('color-convert');
+const { WebClient } = require('@slack/web-api');
 
 const conf = require('./conf');
+
+const slack = new WebClient(conf.slackToken);
 
 const git = new Git({
   auth: conf.gitPersonalAccessToken,
 });
+
+const isBot = pr => pr.user.match(/\[bot\]/);
 
 const _getPRs = async (owner, repo) => {
   if (repo === undefined){
@@ -22,7 +26,7 @@ const _getPRs = async (owner, repo) => {
     owner,
     repo,
   });
-  var usefulList = rawList.data.map(pr => ({
+  let usefulList = rawList.data.map(pr => ({
     url: pr._links.html.href,
     title: pr.title,
     user: pr.user.login,
@@ -47,9 +51,12 @@ const _getPRs = async (owner, repo) => {
   })
 
   const ignoreCount = fullCount - usefulList.length;
+  const botList = usefulList.filter(isBot);
+  usefulList = usefulList.filter(pr => !isBot(pr));
 
   return {
     usefulList,
+    botList,
     ignoreCount,
   };
 }
@@ -84,12 +91,17 @@ const getAllPRs = async (defaultOwner, repos) => {
       }
       memo.ignoreCount += result.ignoreCount;
       memo.prs = memo.prs.concat(result.usefulList);
+      memo.botPrs = memo.botPrs.concat(result.botList);
       return memo;
     }, {
       ignoreCount: 0,
       prs: [],
+      botPrs: [],
     });
+
   allPRs.prs = _.flatten(allPRs.prs);
+  allPRs.botPrs = _.flatten(allPRs.botPrs);
+
   return allPRs;
 };
 
@@ -104,7 +116,11 @@ const _getColour = (createDate, daysToRed = conf.daysToRed) => {
   return `#${color.rgb.hex(r, g, b)}`;
 };
 
-const formatSlackMessage = (slackChannel, { ignoreCount, prs }) => {
+const formatSlackMessage = (slackChannel, {
+  ignoreCount,
+  prs,
+  thread_ts,
+}) => {
   let text = '*This is a reminder that the following PRs are OPEN:*';
   const attachments = prs.map(pr => {
     const attachment = {
@@ -135,31 +151,18 @@ const formatSlackMessage = (slackChannel, { ignoreCount, prs }) => {
       channel: slackChannel,
       text,
       attachments,
+      thread_ts,
     };
   }
   return;
 }
 
-const postMessage = async (slackHook, message) => {
+const postMessage = async (message) => {
   if (message === undefined) {
     logger.info('No open PRs');
     return;
   }
-  var options = {
-    uri: slackHook,
-    method: 'POST',
-    json: true,
-    body: message,
-    retry : 2
-  };
-  try {
-    const response = await request(options);
-    logger.info({ response }, 'Received Slack API response');
-    return;
-  } catch(err) {
-    logger.error({ options }, 'Error posting message');
-    throw err;
-  }
+  return slack.chat.postMessage(message)
 }
 
 module.exports = {
