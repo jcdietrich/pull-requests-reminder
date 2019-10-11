@@ -1,5 +1,6 @@
 module.exports = {
   slackChannel: process.env.SLACK_CHANNEL,
+  slackToken: process.env.SLACK_TOKEN,
   slackHook: process.env.SLACK_HOOK,
   defaultOwner: process.env.DEFAULT_OWNER,
   repos: process.env.REPOSITORIES !== 'undefined' && process.env.REPOSITORIES !== undefined ? process.env.REPOSITORIES.split(',') : [],

@@ -17,7 +17,7 @@ functions:
       - schedule: ${opt:schedule}
     environment:
       SLACK_CHANNEL: ${opt:slack-channel}
-      SLACK_HOOK: ${opt:slack-hook}
+      SLACK_TOKEN: ${opt:slack-token}
       DEFAULT_OWNER: ${opt:default-owner}
       REPOSITORIES: ${opt:repos}
       GIT_PERSONAL_ACCESS_TOKEN: ${opt:git-pat}
