@@ -3,6 +3,7 @@ module.exports = {
   slackToken: process.env.SLACK_TOKEN,
   slackHook: process.env.SLACK_HOOK,
   defaultOwner: process.env.DEFAULT_OWNER,
+  bitBucketPAT: process.env.BITBUCKET_PAT,
   repos: process.env.REPOSITORIES !== 'undefined' && process.env.REPOSITORIES !== undefined ? process.env.REPOSITORIES.split(',') : [],
   gitPersonalAccessToken: process.env.GIT_PERSONAL_ACCESS_TOKEN,
   daysToRed: process.env.DAYS_TO_RED || 14,

@@ -4,8 +4,10 @@ const logger = require('pino')();
 const moment = require('moment');
 const color = require('color-convert');
 const { WebClient } = require('@slack/web-api');
+const superagent = require('superagent');
 
 const conf = require('./conf');
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 
 const slack = new WebClient(conf.slackToken);
 
@@ -35,7 +37,12 @@ const _getPRs = async (owner, repo) => {
     labels: pr.labels.map(label => label.name),
   }));
 
+  return _filterUsefulList(usefulList);
+}
+
+const _filterUsefulList = usefulList => {
   const fullCount = usefulList.length;
+
 
   usefulList = _.filter(usefulList, pr => {
     return conf.ignoreWords.reduce((memo, ignoreWord) => {
@@ -61,8 +68,24 @@ const _getPRs = async (owner, repo) => {
   };
 }
 
-const _getBitBucketPRs = () => {
+const _getBitBucketPRs = async () => {
   const bitBucketPAT = conf.bitBucketPAT;
+  const prs = await superagent
+    .get('https://git.dev.d2l/rest/api/1.0/dashboard/pull-requests')
+    .set({ Authorization: 'Bearer MTM2NzQwMDE3OTQyOrOBiVwY7qyFB8ayz6WTSiTKXHo2' })
+    .query({ state: 'OPEN' })
+  console.log(JSON.parse(prs.text))
+
+  const usefulList = JSON.parse(prs.text).values.map(pr => ({
+    url: pr.links.self[0].href,
+    title: pr.title,
+    user: pr.author.user.name,
+    created_at: pr.createdDate,
+    repo: pr.fromRef.repository.project.name,
+    labels: [],
+  }));
+
+  return _filterUsefulList(usefulList);
 };
 
 const getAllPRs = async (defaultOwner, repos) => {
@@ -88,6 +111,7 @@ const getAllPRs = async (defaultOwner, repos) => {
       const prInfo = await module.exports._getPRs(owner, repo);
       return prInfo
     }));
+    allPRs.concat(_getBitBucketPRs());
 
     allPRs = allPRs.reduce((memo, result) => {
       if (result === undefined) {
@@ -175,4 +199,5 @@ module.exports = {
   formatSlackMessage,
   _getPRs,
   _getColour,
+  _getBitBucketPRs,
 }
