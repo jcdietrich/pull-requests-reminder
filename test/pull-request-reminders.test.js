@@ -1,9 +1,11 @@
-const nock = require('nock')
+const nock = require('nock');
+const SlackMock = require('slack-mock');
 const sandbox = require('sinon').createSandbox();
 const test = require('ava');
 const moment = require('moment');
 
 const pr = require('../src/pull-request-reminders');
+const slackMock = new SlackMock();
 
 test.beforeEach(() => {
   sandbox.restore();
@@ -56,11 +58,11 @@ test.serial('getAllPRs calls with undefineds if repo name has more than one /', 
   const defaultOwner = 'OwnER';
 
   const stub = sandbox.stub(pr, '_getPRs')
-    .resolves({ ignoreCount:0, usefulList: [] });
+    .resolves({ ignoreCount:0, usefulList: [], botList: [] });
 
   const result = await pr.getAllPRs(defaultOwner, repos);
   t.true(stub.firstCall.calledWithExactly(undefined, undefined));
-  t.deepEqual(result, { ignoreCount: 0, prs: [] });
+  t.deepEqual(result, { ignoreCount: 0, prs: [], botPrs: [] });
 });
 
 test.serial('getAllPRs should flatten the arrays', async t => {
@@ -68,10 +70,10 @@ test.serial('getAllPRs should flatten the arrays', async t => {
   const defaultOwner = 'OwnER';
 
   const stub = sandbox.stub(pr, '_getPRs');
-  stub.resolves({ usefulList: [1], ignoreCount: 0 });
+  stub.resolves({ usefulList: [1], ignoreCount: 0, botList: [] });
 
   const result = await pr.getAllPRs(defaultOwner, repos);
-  t.deepEqual(result, { prs: [1,1], ignoreCount: 0 });
+  t.deepEqual(result, { prs: [1,1], ignoreCount: 0, botPrs: [] });
 });
 
 test.serial('_getPRs calls github correctly', async t => {
@@ -81,7 +83,7 @@ test.serial('_getPRs calls github correctly', async t => {
 
   const call1 = nock('https://api.github.com')
     .get(`/repos/${owner}/${repo}/pulls`)
-    .reply('200', []);
+    .reply(200, []);
 
   await pr._getPRs(owner, repo);
   t.true(call1.isDone());
@@ -94,7 +96,7 @@ test.serial('_getPRs rejects if github call fails', async t => {
 
   const call1 = nock('https://api.github.com')
     .get(`/repos/${owner}/${repo}/pulls`)
-    .reply('400', []);
+    .reply(400, []);
 
   await t.throwsAsync(pr._getPRs(owner, repo));
   t.true(call1.isDone());
@@ -156,41 +158,28 @@ test.serial('formatSlackMessage should a formatted slack message', t => {
 });
 
 test.serial('postMessage should return undefined if the message is undefined', async t => {
-  const slackHook = 'http://example.org/slackHook';
   const message = undefined;
 
-  const result = await pr.postMessage(slackHook, message);
+  const result = await pr.postMessage(message);
   t.is(result, undefined);
 });
 
 test.serial('postMessage should call Slack correctly', async t => {
+  const message = { channel: '#none', text: 'a message' };
 
-  const slackHook = 'http://example.org/slackHook';
-  const message = 'a message';
+  slackMock.reset();
+  slackMock.web.addResponse({
+    url: 'https://slack.com/api/chat.postMessage',
+    statusCode: 200
+  })
 
-  const call1 = nock('http://example.org')
-    .post('/slackHook', JSON.stringify(message))
-    .reply('200', []);
-
-  const result = await pr.postMessage(slackHook, message);
-  t.is(result, undefined);
-  t.true(call1.isDone());
+  const result = await pr.postMessage(message);
+  t.is(slackMock.web.calls.length, 1);
+  t.deepEqual(result, { ok: true, response_metadata: {} });
+  slackMock.reset();
 });
 
-test.serial('postMessage should throw if Slack call fails', async t => {
-
-  const slackHook = 'http://example.org/slackHook';
-  const message = 'a message';
-
-  const call1 = nock('http://example.org')
-    .post('/slackHook', JSON.stringify(message))
-    .reply('400', []);
-
-  await t.throwsAsync(pr.postMessage(slackHook, message));
-  t.true(call1.isDone());
-});
-
-test('_getColour should return green for a new PR', t => {
+test.serial('_getColour should return green for a new PR', t => {
   const green = '#00FF00';
   const prDate = new moment();
   const returnValue = pr._getColour(prDate);
@@ -198,7 +187,7 @@ test('_getColour should return green for a new PR', t => {
   t.is(returnValue, green);
 });
 
-test('_getColour should return red for a PR x days old', t => {
+test.serial('_getColour should return red for a PR x days old', t => {
   const red = '#FF0000';
   const x = 14;
   const prDate = new moment().subtract(x, 'days');
@@ -207,7 +196,7 @@ test('_getColour should return red for a PR x days old', t => {
   t.is(returnValue, red);
 });
 
-test('_getColour should return red for a PR more than x days old', t => {
+test.serial('_getColour should return red for a PR more than x days old', t => {
   const red = '#FF0000';
   const x = 14;
   const prDate = new moment().subtract(86, 'days');
@@ -217,7 +206,7 @@ test('_getColour should return red for a PR more than x days old', t => {
 });
 
 
-test('_getColour should return neither red nor green for a PR less than x days', t => {
+test.serial('_getColour should return neither red nor green for a PR less than x days', t => {
   const red = '#FF0000';
   const green = '#00FF00';
   const x = 14;

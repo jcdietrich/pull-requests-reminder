@@ -61,6 +61,10 @@ const _getPRs = async (owner, repo) => {
   };
 }
 
+const _getBitBucketPRs = () => {
+  const bitBucketPAT = conf.bitBucketPAT;
+};
+
 const getAllPRs = async (defaultOwner, repos) => {
   let allPRs = await Promise.all(_.uniq(repos)
     .map(async repoFull => {
@@ -160,9 +164,9 @@ const formatSlackMessage = (slackChannel, {
 const postMessage = async (message) => {
   if (message === undefined) {
     logger.info('No open PRs');
-    return;
+    return undefined;
   }
-  return slack.chat.postMessage(message)
+  return slack.chat.postMessage(message);
 }
 
 module.exports = {
