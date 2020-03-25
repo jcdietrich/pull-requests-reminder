@@ -26,14 +26,8 @@ const _getPRs = async (owner, repo) => {
     owner,
     repo,
   });
-  let usefulList = rawList.data.map(pr => ({
-    url: pr._links.html.href,
-    title: pr.title,
-    user: pr.user.login,
-    created_at: pr.created_at,
-    repo: pr.base.repo.full_name,
-    labels: pr.labels.map(label => label.name),
-  }));
+  let usefulList = await Promise.all(rawList.data.map(pr =>
+    getUsefulList(owner, repo, pr)));
 
   const fullCount = usefulList.length;
 
@@ -61,8 +55,24 @@ const _getPRs = async (owner, repo) => {
   };
 }
 
-const _getBitBucketPRs = () => {
-  const bitBucketPAT = conf.bitBucketPAT;
+const getUsefulList = async (owner, repo, pr) => {
+  const approvalFull = await git.pulls.listReviews({
+    owner,
+    repo,
+    pull_number: pr.number,
+  });
+
+  const approvals = approvalFull.data.filter(r => r.state === 'APPROVED').length;
+
+  return {
+    url: pr._links.html.href,
+    title: pr.title,
+    user: pr.user.login,
+    created_at: pr.created_at,
+    repo: pr.base.repo.full_name,
+    labels: pr.labels.map(label => label.name),
+    approvals,
+  };
 };
 
 const getAllPRs = async (defaultOwner, repos) => {
@@ -131,7 +141,7 @@ const formatSlackMessage = (slackChannel, {
       color: _getColour(pr.created_at),
       title: pr.title,
       title_link: pr.url,
-      text: `in *${pr.repo}* by ${pr.user} created ${moment(pr.created_at).fromNow()}`,
+      text: `in *${pr.repo}* by ${pr.user} created ${moment(pr.created_at).fromNow()} (approvals: ${pr.approvals})`,
       mrkdwn_in: ['text'],
     }
 
