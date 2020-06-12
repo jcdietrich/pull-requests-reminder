@@ -8,4 +8,5 @@ module.exports = {
   daysToRed: process.env.DAYS_TO_RED || 14,
   ignoreWords: process.env.IGNORE_WORDS !== 'undefined' && process.env.IGNORE_WORDS !== undefined ? process.env.IGNORE_WORDS.split(',') : [],
   ignoreLabels: process.env.IGNORE_LABELS !== 'undefined' && process.env.IGNORE_LABELS !== undefined ? process.env.IGNORE_LABELS.split(',') : [],
+  alwaysAppendedText: process.env.ALWAYS_APPENDED_TEXT
 }

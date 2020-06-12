@@ -23,4 +23,5 @@ functions:
       GIT_PERSONAL_ACCESS_TOKEN: ${opt:git-pat}
       IGNORE_WORDS: ${opt:ignore-words}
       IGNORE_LABELS: ${opt:ignore-labels}
+      ALWAYS_APPENDED_TEXT: ${opt:append-text}
 
