@@ -10,7 +10,7 @@ To use:
   * `--default-owner <DEFAULT GITHUB REPO OWNER>` the default user or org used for repos where a owner is not specified.
   * `--repos <COMMA SEPARATED REPO LIST>` repo list, specify the owner/repo unless owner is the default one
   * `--git-pat <GIT PERSONAL ACCESS TOKEN>`
-  * `--schedule <RATE OR CRON SCHEDULE>` See [Amazon's documentation on schedule expressions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)(note: this will need to be passed in quotes)
+  * `--schedule <RATE OR CRON SCHEDULE>` See [Amazon's docs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)(note: this will need to be passed in quotes)
   * `--ignore-words <COMMA SEPARATED LIST OF IGNORE WORDS>` 
   * `--ignore-labels <COMMA SEPARATED LIST OF IGNORE LABELS>`
   * `--append-text '<TEXT TO ALWAYS APPEAR AFTER ALL REMINDERS>'` note that this accepts slack markdown.
