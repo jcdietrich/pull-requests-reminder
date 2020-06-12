@@ -13,6 +13,6 @@ To use:
   * `--schedule <RATE OR CRON SCHEDULE>` See [Amazon's documentation on schedule expressions]
   * `--ignore-words <COMMA SEPARATED LIST OF IGNORE WORDS>` 
   * `--ignore-labels <COMMA SEPARATED LIST OF IGNORE LABELS>`
-  * `--append-text '<TEXT TO ALWAYS APPEAR AFTER ALL REMINDERS>' note that this accepts slack markdown.
+  * `--append-text '<TEXT TO ALWAYS APPEAR AFTER ALL REMINDERS>'` note that this accepts slack markdown.
 
 (https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html) (Note: this will need to be passed in quotes)
