@@ -8,6 +8,7 @@ const { WebClient } = require('@slack/web-api');
 const conf = require('./conf');
 
 const slack = new WebClient(conf.slackToken);
+const alwaysAppendedText = conf.alwaysAppendedText;
 
 const git = new Git({
   auth: conf.gitPersonalAccessToken,
@@ -158,6 +159,14 @@ const formatSlackMessage = (slackChannel, {
       text = `There are no open PRs,`
     }
       text += ` _${ignoreCount} ignored_`;
+  }
+
+  if (alwaysAppendedText !== ''){
+    const alwaysAppendedAttachment = {
+      text: alwaysAppendedText,
+      mrkdwn_in: ['text'],
+    };
+    attachments.push(alwaysAppendedAttachment);
   }
 
   if(attachments.length > 0 || ignoreCount > 0) {
