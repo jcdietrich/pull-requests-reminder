@@ -36,7 +36,7 @@
     "@slack/web-api": "^5.2.1",
     "bitbucket": "^2.0.3",
     "color-convert": "^2.0.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "moment": "^2.24.0",
     "pino": "^5.12.5",
     "slack-mock": "^1.1.1"
