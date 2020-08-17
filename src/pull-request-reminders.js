@@ -23,12 +23,18 @@ const _getPRs = async (owner, repo) => {
 
   logger.info({owner, repo}, 'fetching PRs')
 
-  const rawList = await git.pulls.list({
+  let rawList = await git.pulls.list({
     owner,
     repo,
   });
+
+  rawList.data = rawList.data.filter(pr => {
+    const reviewers = _.flatten(pr.requested_reviewers.map(reviewer => reviewer.login));
+    return conf.logins.filter(login => reviewers.includes(login)).length;
+  });
+
   let usefulList = await Promise.all(rawList.data.map(pr =>
-    getUsefulList(owner, repo, pr)));
+    module.exports._getUsefulList(owner, repo, pr)));
 
   const fullCount = usefulList.length;
 
@@ -56,7 +62,7 @@ const _getPRs = async (owner, repo) => {
   };
 }
 
-const getUsefulList = async (owner, repo, pr) => {
+const _getUsefulList = async (owner, repo, pr) => {
   const approvalFull = await git.pulls.listReviews({
     owner,
     repo,
@@ -192,6 +198,7 @@ module.exports = {
   getAllPRs,
   postMessage,
   formatSlackMessage,
+  _getUsefulList,
   _getPRs,
   _getColour,
 }
