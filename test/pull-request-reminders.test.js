@@ -5,6 +5,8 @@ const test = require('ava');
 const moment = require('moment');
 
 const pr = require('../src/pull-request-reminders');
+const config = require('../src/conf');
+
 const slackMock = new SlackMock();
 
 test.beforeEach(() => {
@@ -109,6 +111,58 @@ test.serial('_getPRs returns correctly if repo is undefined', async t => {
 
   const result = await pr._getPRs(owner, repo);
   t.deepEqual(result, { ignoreCount: 0, usefulList: [] });
+});
+
+test.serial('_getPRs filters PRs based on if a login is a requested reviewer', async t => {
+  const repo = 'one';
+  const owner = 'OwnER';
+
+  const githubReply = [
+      {
+        requested_reviewers: [
+          {
+            login: 'a',
+          },
+          {
+            login: 'b'
+          }
+        ]
+      },
+      {
+        requested_reviewers: [
+          {
+            login: 'a',
+          }
+        ]
+      },
+      {
+        requested_reviewers: [
+          {
+            login: 'c',
+          }
+        ]
+      },
+      {
+        requested_reviewers: [
+          {
+            login: 'b',
+          }
+        ]
+      }
+    ];
+
+  const call1 = nock('https://api.github.com')
+    .get(`/repos/${owner}/${repo}/pulls`)
+    .reply(200, githubReply);
+
+  sandbox.stub(config, 'logins').value(['b']);
+  const getUsefulListStub = sandbox.stub(pr, '_getUsefulList').returns([{ test: true }]);
+
+  await t.throwsAsync(pr._getPRs(owner, repo));
+  t.true(call1.isDone());
+  t.true(getUsefulListStub.calledTwice);
+  t.deepEqual(getUsefulListStub.args[0][2], githubReply[0]);
+  t.deepEqual(getUsefulListStub.args[1][2], githubReply[3]);
 });
 
 test.serial('formatSlackMessage should return undefined if there is no prs and non ignored', t => {

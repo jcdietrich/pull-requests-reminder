@@ -11,8 +11,8 @@ To use:
   * `--repos <COMMA SEPARATED REPO LIST>` repo list, specify the owner/repo unless owner is the default one
   * `--git-pat <GIT PERSONAL ACCESS TOKEN>`
   * `--schedule <RATE OR CRON SCHEDULE>` See [Amazon's docs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)(note: this will need to be passed in quotes)
-  * `--ignore-words <COMMA SEPARATED LIST OF IGNORE WORDS>` 
+  * `--ignore-words <COMMA SEPARATED LIST OF IGNORE WORDS>`
   * `--ignore-labels <COMMA SEPARATED LIST OF IGNORE LABELS>`
   * `--append-text '<TEXT TO ALWAYS APPEAR AFTER ALL REMINDERS>'` note that this accepts slack markdown.
-
+  * `--logins <COMMA SEPARATED LIST OF LOGINS REQUIRED TO APPEAR AS REVIEWER>`
 

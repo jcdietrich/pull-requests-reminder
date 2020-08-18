@@ -24,4 +24,5 @@ functions:
       IGNORE_WORDS: ${opt:ignore-words}
       IGNORE_LABELS: ${opt:ignore-labels}
       ALWAYS_APPENDED_TEXT: ${opt:append-text}
+      LOGINS: ${opt:logins}
 
