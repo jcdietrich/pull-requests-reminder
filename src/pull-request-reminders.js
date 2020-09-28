@@ -66,10 +66,27 @@ const _getUsefulList = async (owner, repo, pr) => {
   const approvalFull = await git.pulls.listReviews({
     owner,
     repo,
-    pull_number: pr.number,
+    pull_number: pr.number
   });
 
+  let commitsFull;
+  let page = 0;
+
+  do {
+    page = page + 1;
+    commitsFull = await git.pulls.listCommits({
+      owner,
+      repo,
+      pull_number: pr.number,
+      per_page: 100,
+      page
+    });
+
+  } while (commitsFull.headers.link && commitsFull.headers.link.includes('next'))
+
   const approvals = approvalFull.data.filter(r => r.state === 'APPROVED').length;
+  const commitDates = commitsFull.data.map(x => x.commit.committer.date).sort();
+  const lastCommitDate = commitDates[commitDates.length - 1]
 
   return {
     url: pr._links.html.href,
@@ -79,6 +96,7 @@ const _getUsefulList = async (owner, repo, pr) => {
     repo: pr.base.repo.full_name,
     labels: pr.labels.map(label => label.name),
     approvals,
+    lastCommitDate
   };
 };
 
@@ -148,7 +166,7 @@ const formatSlackMessage = (slackChannel, {
       color: _getColour(pr.created_at),
       title: pr.title,
       title_link: pr.url,
-      text: `in *${pr.repo}* by ${pr.user} created ${moment(pr.created_at).fromNow()} (approvals: ${pr.approvals})`,
+      text: `in *${pr.repo}* by ${pr.user}\ncreated ${moment(pr.created_at).fromNow()}, last commit ${moment(pr.lastCommitDate).fromNow()} (approvals: ${pr.approvals})`,
       mrkdwn_in: ['text'],
     }
 
