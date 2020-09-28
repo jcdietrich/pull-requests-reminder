@@ -28,10 +28,14 @@ const _getPRs = async (owner, repo) => {
     repo,
   });
 
+  const numberBeforeFilter = rawList.data.length;
+
   rawList.data = rawList.data.filter(pr => {
     const reviewers = _.flatten(pr.requested_reviewers.map(reviewer => reviewer.login));
     return conf.logins.filter(login => reviewers.includes(login)).length;
   });
+
+logger.info({ numberAfterFilter: rawList.data.length, data: rawList.data, numberBeforeFilter});
 
   let usefulList = await Promise.all(rawList.data.map(pr =>
     module.exports._getUsefulList(owner, repo, pr)));
