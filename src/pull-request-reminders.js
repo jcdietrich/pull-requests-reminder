@@ -87,7 +87,6 @@ const _getUsefulList = async (owner, repo, pr) => {
   const approvals = approvalFull.data.filter(r => r.state === 'APPROVED').length;
   const commitDates = commitsFull.data.map(x => x.commit.committer.date).sort();
   const lastCommitDate = commitDates[commitDates.length - 1]
-  console.log(lastCommitDate, moment(lastCommitDate).fromNow(), commitsFull.data.length)
 
   return {
     url: pr._links.html.href,
