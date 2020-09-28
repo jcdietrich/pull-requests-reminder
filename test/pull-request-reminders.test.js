@@ -84,7 +84,7 @@ test.serial('_getPRs calls github correctly', async t => {
   const owner = 'OwnER';
 
   const call1 = nock('https://api.github.com')
-    .get(`/repos/${owner}/${repo}/pulls`)
+    .get(`/repos/${owner}/${repo}/pulls?per_page=100&page=1`)
     .reply(200, []);
 
   await pr._getPRs(owner, repo);
@@ -97,7 +97,7 @@ test.serial('_getPRs rejects if github call fails', async t => {
   const owner = 'OwnER';
 
   const call1 = nock('https://api.github.com')
-    .get(`/repos/${owner}/${repo}/pulls`)
+    .get(`/repos/${owner}/${repo}/pulls?per_page=100&page=1`)
     .reply(400, []);
 
   await t.throwsAsync(pr._getPRs(owner, repo));
@@ -152,7 +152,7 @@ test.serial('_getPRs filters PRs based on if a login is a requested reviewer', a
     ];
 
   const call1 = nock('https://api.github.com')
-    .get(`/repos/${owner}/${repo}/pulls`)
+    .get(`/repos/${owner}/${repo}/pulls?per_page=100&page=1`)
     .reply(200, githubReply);
 
   sandbox.stub(config, 'logins').value(['b']);

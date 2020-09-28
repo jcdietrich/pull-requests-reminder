@@ -22,22 +22,31 @@ const _getPRs = async (owner, repo) => {
   }
 
   logger.info({owner, repo}, 'fetching PRs')
+  let page = 0;
+  let data = [];
+  let rawList;
 
-  let rawList = await git.pulls.list({
-    owner,
-    repo,
-  });
+  do {
+    page = page + 1;
+    rawList = await git.pulls.list({
+      owner,
+      repo,
+      per_page: 100,
+      page,
+    });
+    data = data.concat(rawList.data)
+  } while (rawList.headers.link && rawList.headers.link.includes('next'))
 
-  const numberBeforeFilter = rawList.data.length;
+  const numberBeforeFilter = data.length;
 
-  rawList.data = rawList.data.filter(pr => {
+  data = data.filter(pr => {
     const reviewers = _.flatten(pr.requested_reviewers.map(reviewer => reviewer.login));
     return conf.logins.filter(login => reviewers.includes(login)).length;
   });
 
-logger.info({ numberAfterFilter: rawList.data.length, data: rawList.data, numberBeforeFilter});
+logger.info({ repo, owner, numberAfterFilter: data.length, numberBeforeFilter});
 
-  let usefulList = await Promise.all(rawList.data.map(pr =>
+  let usefulList = await Promise.all(data.map(pr =>
     module.exports._getUsefulList(owner, repo, pr)));
 
   const fullCount = usefulList.length;
