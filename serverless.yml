@@ -26,3 +26,5 @@ functions:
       ALWAYS_APPENDED_TEXT: ${opt:append-text}
       LOGINS: ${opt:logins}
 
+plugins:
+  - serverless-plugin-common-excludes
