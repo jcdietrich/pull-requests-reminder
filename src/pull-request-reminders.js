@@ -40,7 +40,8 @@ const _getPRs = async (owner, repo) => {
   const numberBeforeFilter = data.length;
 
   data = data.filter(pr => {
-    const reviewers = _.flatten(pr.requested_reviewers.map(reviewer => reviewer.login));
+    let reviewers = _.flatten(pr.requested_reviewers.map(reviewer => reviewer.login));
+    reviewers = reviewers.concat(_.flatten(pr.requested_teams.map(team => team.slug)));
     return conf.logins.filter(login => reviewers.includes(login)).length;
   });
 
